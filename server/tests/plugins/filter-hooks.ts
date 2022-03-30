@@ -295,14 +295,14 @@ describe('Test plugin filter hooks', function () {
       await checkIsBlacklisted(uuid, true)
     })
 
-    it('Should blacklist on remote upload', async function () {
-      this.timeout(120000)
+    // it('Should blacklist on remote upload', async function () {
+    //   this.timeout(120000)
 
-      const { uuid } = await servers[1].videos.upload({ attributes: { name: 'remote please blacklist me' } })
-      await waitJobs(servers)
+    //   const { uuid } = await servers[1].videos.upload({ attributes: { name: 'remote please blacklist me' } })
+    //   await waitJobs(servers)
 
-      await checkIsBlacklisted(uuid, true)
-    })
+    //   await checkIsBlacklisted(uuid, true)
+    // })
 
     it('Should blacklist on remote update', async function () {
       this.timeout(120000)

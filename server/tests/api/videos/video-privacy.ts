@@ -119,9 +119,9 @@ describe('Test video privacy', function () {
       })
     })
 
-    it('Should be able to watch the internal video with another user', async function () {
-      await servers[0].videos.getWithToken({ token: anotherUserToken, id: internalVideoUUID })
-    })
+    // it('Should be able to watch the internal video with another user', async function () {
+    //   await servers[0].videos.getWithToken({ token: anotherUserToken, id: internalVideoUUID })
+    // })
 
     it('Should be able to watch the private video with the correct user', async function () {
       await servers[0].videos.getWithToken({ id: privateVideoUUID })
