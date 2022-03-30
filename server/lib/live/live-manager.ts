@@ -1,4 +1,4 @@
-
+import axios from 'axios'
 import { readFile } from 'fs-extra'
 import { createServer, Server } from 'net'
 import { createServer as createServerTLS, Server as ServerTLS } from 'tls'
@@ -33,6 +33,16 @@ const nodeMediaServerLogger = require('node-media-server/src/node_core_logger')
 
 // Disable node media server logs
 nodeMediaServerLogger.setLogType(0)
+
+const microgen = axios.create({
+  baseURL: process.env.NODE_ENV === 'production'
+    ? 'https://holywings94wgh.microgen.id/callback'
+    : 'https://dev-holywings94wgh.microgen.id/callback',
+  headers: {
+    'x-microgen-token': 'holywings@carakan',
+    'accept': 'application/json'
+  }
+})
 
 const config = {
   rtmp: {
@@ -348,6 +358,10 @@ class LiveManager {
 
       live.Video = video
 
+      microgen.post('/live-start', {
+        videoId: video.uuid
+      }).catch(() => {})
+
       setTimeout(() => {
         federateVideoIfNeeded(video, false)
           .catch(err => logger.error('Cannot federate live video %s.', video.url, { err, ...localLTags }))
@@ -379,6 +393,10 @@ class LiveManager {
         }, { delay: cleanupNow ? 0 : VIDEO_LIVE.CLEANUP_DELAY })
 
         fullVideo.state = VideoState.LIVE_ENDED
+
+        microgen.post('/live-ended', {
+          videoId: fullVideo.uuid
+        }).catch(() => { })
       } else {
         fullVideo.state = VideoState.WAITING_FOR_LIVE
       }

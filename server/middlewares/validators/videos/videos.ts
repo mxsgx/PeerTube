@@ -1,3 +1,4 @@
+import axios from 'axios'
 import express from 'express'
 import { body, header, param, query, ValidationChain } from 'express-validator'
 import { isTestInstance } from '@server/helpers/core-utils'
@@ -58,6 +59,29 @@ import {
   doesVideoFileOfVideoExist,
   isValidVideoIdParam
 } from '../shared'
+
+const microgen = axios.create({
+  baseURL: process.env.NODE_ENV === 'production' ? 'https://holywings94wgh.microgen.id/api' : 'https://dev-holywings94wgh.microgen.id/api',
+  headers: {
+    'x-microgen-token': 'holywings@carakan',
+    'accept': 'application/json'
+  }
+})
+
+const microgenAuthorizeVideo = async (userId: String | Number | any, videoUuid: String) => {
+  try {
+    const authorize = await microgen.post('/v1/livestreams/authorize', {
+      userId: userId,
+      videoId: videoUuid
+    })
+
+    if (authorize.status === 200 && authorize.data.purchased) return true
+  } catch (error) {
+    logger.info('Microgen: ', error.message || error)
+  }
+
+  return false
+}
 
 const videosAddLegacyValidator = getCommonVideoEditAttributes().concat([
   body('videofile')
@@ -299,7 +323,22 @@ const videosCustomGetValidator = (
 
       // Video private or blacklisted
       if (video.requiresAuth()) {
-        if (await checkCanSeePrivateVideo(req, res, video, authenticateInQuery)) return next()
+        if (await checkCanSeePrivateVideo(req, res, video, authenticateInQuery)) {
+          if (video.privacy === VideoPrivacy.PRIVATE) return next()
+
+          const userId = res.locals.oauth ? res.locals.oauth.token.userId : null
+
+          if (!userId) {
+            return res.fail({
+              status: HttpStatusCode.FORBIDDEN_403,
+              message: 'Cannot get this private/internal or blocklisted video'
+            })
+          }
+
+          if (userId === video.VideoChannel.Account.userId) return next()
+
+          if (await microgenAuthorizeVideo(userId, video.uuid)) return next()
+        }
 
         return res.fail({
           status: HttpStatusCode.FORBIDDEN_403,
@@ -598,7 +637,7 @@ async function commonVideoChecksPass (parameters: {
     res.fail({
       status: HttpStatusCode.UNSUPPORTED_MEDIA_TYPE_415,
       message: 'This file is not supported. Please, make sure it is of the following type: ' +
-               CONSTRAINTS_FIELDS.VIDEOS.EXTNAME.join(', ')
+        CONSTRAINTS_FIELDS.VIDEOS.EXTNAME.join(', ')
     })
     return false
   }

@@ -84,6 +84,7 @@
     "@uploadx/core": "^5.0.0",
     "async": "^3.0.1",
     "async-lru": "^1.1.1",
+    "axios": "^0.26.1",
     "bcrypt": "5.0.1",
     "bencode": "^2.0.2",
     "bittorrent-tracker": "^9.0.0",
