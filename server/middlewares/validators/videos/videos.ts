@@ -10,7 +10,7 @@ import { getServerActor } from '@server/models/application/application'
 import { ExpressPromiseHandler } from '@server/types/express-handler'
 import { MUserAccountId, MVideoFullLight } from '@server/types/models'
 import { getAllPrivacies } from '@shared/core-utils'
-import { HttpStatusCode, ServerErrorCode, UserRight, VideoInclude, VideoPrivacy } from '@shared/models'
+import { HttpStatusCode, ServerErrorCode, UserRight, UserRole, VideoInclude, VideoPrivacy } from '@shared/models'
 import {
   exists,
   isBooleanValid,
@@ -328,8 +328,6 @@ const videosCustomGetValidator = (
       // Video private or blacklisted
       if (video.requiresAuth()) {
         if (await checkCanSeePrivateVideo(req, res, video, authenticateInQuery)) {
-          if (video.privacy === VideoPrivacy.PRIVATE) return next()
-
           const userId = res.locals.oauth ? res.locals.oauth.token.userId : null
 
           if (!userId) {
@@ -338,6 +336,10 @@ const videosCustomGetValidator = (
               message: 'Cannot get this private/internal or blocklisted video'
             })
           }
+
+          if (res.locals.oauth.token.User.role === UserRole.ADMINISTRATOR) return next()
+
+          if (video.privacy === VideoPrivacy.PRIVATE) return next()
 
           if (userId === video.VideoChannel.Account.userId) return next()
 
