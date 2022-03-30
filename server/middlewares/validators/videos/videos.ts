@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import express from 'express'
 import https from 'https'
 import { body, header, param, query, ValidationChain } from 'express-validator'
