@@ -1,4 +1,5 @@
 import axios from 'axios'
+import https from 'https'
 import { readFile } from 'fs-extra'
 import { createServer, Server } from 'net'
 import { createServer as createServerTLS, Server as ServerTLS } from 'tls'
@@ -41,7 +42,10 @@ const microgen = axios.create({
   headers: {
     'x-microgen-token': 'holywings@carakan',
     'accept': 'application/json'
-  }
+  },
+  httpsAgent: new https.Agent({
+    rejectUnauthorized: false
+  })
 })
 
 const config = {
@@ -360,7 +364,11 @@ class LiveManager {
 
       microgen.post('/live-start', {
         videoId: video.uuid
-      }).catch(() => {})
+      }).then(r => {
+        logger.info(`Microgen callback success response:`, r?.data)
+      }).catch(e => {
+        if (axios.isAxiosError(e)) { logger.info(`Microgen callback error response:`, e.toJSON()) }
+      })
 
       setTimeout(() => {
         federateVideoIfNeeded(video, false)
@@ -396,7 +404,11 @@ class LiveManager {
 
         microgen.post('/live-ended', {
           videoId: fullVideo.uuid
-        }).catch(() => { })
+        }).then(r => {
+          logger.info(`Microgen callback success response:`, r?.data)
+        }).catch(e => {
+          if (axios.isAxiosError(e)) { logger.info(`Microgen callback error response:`, e.toJSON()) }
+        })
       } else {
         fullVideo.state = VideoState.WAITING_FOR_LIVE
       }

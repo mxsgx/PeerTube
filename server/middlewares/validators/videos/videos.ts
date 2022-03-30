@@ -1,5 +1,6 @@
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import express from 'express'
+import https from 'https'
 import { body, header, param, query, ValidationChain } from 'express-validator'
 import { isTestInstance } from '@server/helpers/core-utils'
 import { getResumableUploadPath } from '@server/helpers/upload'
@@ -65,7 +66,10 @@ const microgen = axios.create({
   headers: {
     'x-microgen-token': 'holywings@carakan',
     'accept': 'application/json'
-  }
+  },
+  httpsAgent: new https.Agent({
+    rejectUnauthorized: false
+  })
 })
 
 const microgenAuthorizeVideo = async (userId: String | Number | any, videoUuid: String) => {
@@ -77,7 +81,7 @@ const microgenAuthorizeVideo = async (userId: String | Number | any, videoUuid: 
 
     if (authorize.status === 200 && authorize.data.purchased) return true
   } catch (error) {
-    logger.info('Microgen: ', error.message || error)
+    if (axios.isAxiosError(error)) { logger.info('Microgen authorization error: ', error.toJSON()) }
   }
 
   return false
